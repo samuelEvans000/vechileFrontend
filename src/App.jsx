@@ -7,9 +7,9 @@ import "./App.css";
 
 const center = [17.385044, 78.486671];
 
-// Custom icon for the vehicle
+
 const vehicleIcon = new L.Icon({
-  iconUrl: "/assets/vechile.png",
+  iconUrl: "/assets/vehicle.png",
   iconSize: [40, 40],
 });
 
@@ -18,6 +18,7 @@ const App = () => {
   const [currentPosition, setCurrentPosition] = useState(center);
   const [isMoving, setIsMoving] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [selectedRoute, setSelectedRoute] = useState("Route 1");
   const intervalRef = useRef(null);
 
   useEffect(() => {
@@ -27,6 +28,11 @@ const App = () => {
         const { defaultLocation, routeData } = response.data;
         setRouteData(routeData);
         setCurrentPosition([
+          defaultLocation.latitude,
+          defaultLocation.longitude,
+        ]);
+        console.log("Fetched route data: ", routeData);
+        console.log("Set current position: ", [
           defaultLocation.latitude,
           defaultLocation.longitude,
         ]);
@@ -52,6 +58,7 @@ const App = () => {
             routeData[nextIndex].latitude,
             routeData[nextIndex].longitude,
           ]);
+          console.log("Moved vehicle to: ", [routeData[nextIndex].latitude, routeData[nextIndex].longitude]);
           setProgress(((nextIndex + 1) / routeData.length) * 100);
         } else {
           clearInterval(intervalRef.current);
@@ -65,26 +72,42 @@ const App = () => {
     return () => clearInterval(intervalRef.current);
   }, [isMoving, routeData, currentPosition]);
 
+  const handleRouteChange = async (e) => {
+    const routeName = e.target.value;
+    setSelectedRoute(routeName);
+    try {
+      await axios.post("http://localhost:3001/api/select-route", { routeName });
+      const response = await axios.get("http://localhost:3001/api/vehicle");
+      const { defaultLocation, routeData } = response.data;
+      setRouteData(routeData);
+      setCurrentPosition([defaultLocation.latitude, defaultLocation.longitude]);
+      console.log("Route changed to: ", routeName);
+      console.log("Fetched new route data: ", routeData);
+      setProgress(0);
+      setIsMoving(false);
+    } catch (error) {
+      console.error("Error updating route:", error);
+    }
+  };
+
   const pathCoordinates = routeData.map((point) => [
     point.latitude,
     point.longitude,
   ]);
 
-
-  const toggleMovement = () =>{
-    setIsMoving(prevState => !prevState);
-  }
+  const toggleMovement = () => {
+    setIsMoving((prevState) => !prevState);
+  };
 
   const restartMovement = () => {
     setIsMoving(false);
-    setCurrentPosition(center);
+    setCurrentPosition([routeData[0].latitude, routeData[0].longitude]);
     setProgress(0);
-};
+  };
 
   const getButtonImageSrc = () => {
     return isMoving ? "/assets/pause.png" : "/assets/play.png";
   };
-
 
   return (
     <div className="mapContainer">
@@ -98,13 +121,27 @@ const App = () => {
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         />
         {routeData.length > 0 && (
-          <Marker position={currentPosition} icon={vehicleIcon} />
+          <>
+            <Marker position={currentPosition} icon={vehicleIcon} />
+            <Polyline positions={pathCoordinates} color="red" />
+          </>
         )}
-        <Polyline positions={pathCoordinates} color="red" />
       </MapContainer>
       <div className="container">
-        <button className="start" onClick={toggleMovement}><img src={getButtonImageSrc()} /></button>
-        <button className="stop" onClick={restartMovement}><img src="/assets/restart.png " /></button>
+        <select
+          value={selectedRoute}
+          onChange={handleRouteChange}
+        >
+          <option value="Route 1">mehfil restaurant</option>
+          <option value="Route 2">yashodha hospital</option>
+          <option value="Route 3">osmania university</option>
+        </select>
+        <button className="start" onClick={toggleMovement}>
+          <img src={getButtonImageSrc()} alt="Toggle Movement" />
+        </button>
+        <button className="stop" onClick={restartMovement}>
+          <img src="/assets/restart.png" alt="Restart" />
+        </button>
         <div
           style={{
             zIndex: 1000,
@@ -113,13 +150,14 @@ const App = () => {
             backgroundColor: "#e0e0e0",
             borderRadius: "10px",
             overflow: "hidden",
+            marginTop: "10px",
           }}
         >
           <div
             style={{
               width: `${progress}%`,
               height: "100%",
-              backgroundColor: " rgb(62, 117, 189)",
+              backgroundColor: "rgb(62, 117, 189)",
               transition: "width 1s ease",
             }}
           />
