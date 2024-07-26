@@ -76,8 +76,8 @@ const App = () => {
     const routeName = e.target.value;
     setSelectedRoute(routeName);
     try {
-      await axios.post("http://localhost:3001/api/select-route", { routeName });
-      const response = await axios.get("http://localhost:3001/api/vehicle");
+      await axios.post("https://vechilebackend.onrender.com/api/select-route", { routeName });
+      const response = await axios.get("https://vechilebackend.onrender.com/api/vehicle");
       const { defaultLocation, routeData } = response.data;
       setRouteData(routeData);
       setCurrentPosition([defaultLocation.latitude, defaultLocation.longitude]);
