@@ -18,7 +18,7 @@ const App = () => {
   const [isMoving, setIsMoving] = useState(false);
   const [progress, setProgress] = useState(0);
   const [selectedRoute, setSelectedRoute] = useState("select");
-  const [loading, setLoading] = useState(true); // New state for loading indicator
+  const [loading, setLoading] = useState(true); 
   const intervalRef = useRef(null);
 
   useEffect(() => {
@@ -48,7 +48,7 @@ const App = () => {
     } catch (error) {
       console.error("Error fetching vehicle data:", error);
     } finally {
-      setLoading(false); // Hide loading indicator
+      setLoading(false); 
     }
   };
 
@@ -90,7 +90,7 @@ const App = () => {
       localStorage.setItem("selectedRoute", routeName);
     }
     try {
-      setLoading(true); // Show loading indicator
+      setLoading(true); 
       await axios.post("https://vechilebackend.onrender.com/api/select-route", { routeName });
       const response = await axios.get("https://vechilebackend.onrender.com/api/vehicle");
       const { defaultLocation, routeData } = response.data;
@@ -106,7 +106,7 @@ const App = () => {
     } catch (error) {
       console.error("Error updating route:", error);
     } finally {
-      setLoading(false); // Hide loading indicator
+      setLoading(false); 
     }
   };
 
